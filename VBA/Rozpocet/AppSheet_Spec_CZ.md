@@ -8,30 +8,30 @@ Tento dokument převádí aktuální VBA aplikaci „Rozpocet“ do návrhu AppS
 
 ### 1.1 Primární zdroje dat
 
-- **SQL Server view** `hvw_ReportRozpocetPlneni` → načítá se do listu **Rozpočet**. VBA používá `SELECT *` a řadí podle `Obdobi, Skupina, Ucet`.【F:VBA/Rozpocet/Modules/Data.bas†L20-L96】
-- **SQL Server view** `hvw_ReportRozpocetPlneniDetail` → detailní drill‑down podle `SkupinaUctu, Rok, Mesic` a sloupců `Datum, Firma, Zamestnanec, Ucet, Nazev, CastkaMD, CastkaDAL, Popis`.【F:VBA/Rozpocet/Modules/Data.bas†L153-L246】
+- **SQL Server view** `hvw_ReportRozpocetPlneni` → načítá se do listu **Rozpočet**. VBA používá `SELECT *` a řadí podle `Obdobi, Skupina, Ucet`.
+- **SQL Server view** `hvw_ReportRozpocetPlneniDetail` → detailní drill‑down podle `SkupinaUctu, Rok, Mesic` a sloupců `Datum, Firma, Zamestnanec, Ucet, Nazev, CastkaMD, CastkaDAL, Popis`.
 
 ### 1.2 Pracovní listy a jejich role
 
-- **Aplikace**: hlavní rozpočtová tabulka; sloupce B:AQ obsahují měsíční hodnoty v mřížce, řádky 4/5 nesou rok/měsíc; poznámky ve sloupci AS se ukládají do `data.ini`.【F:VBA/Rozpocet/Modules/Data.bas†L520-L534】【F:VBA/Rozpocet/Modules/Poznamky.bas†L14-L90】
-- **Kumulace**: kumulace plán/skutečnost/rozdíl dle checkboxů; data se přepočítávají makrem a navazují na strukturu Aplikace. Rozsahy plán/skutečnost/rozdíl jsou fixní (F–Q, S–AD, AF–AQ).【F:VBA/Rozpocet/Modules/Data.bas†L285-L395】
-- **DataProGraf**: pomocný list pro grafy, kopíruje data z Aplikace/Kumulace pro zobrazení ve formu grafů.【F:VBA/Rozpocet/Modules/Data.bas†L510-L534】
-- **Grafy**: obsahuje grafy `GrafKategorie` a `GrafKategorieKumulativni`; grafy se exportují jako JPG a zobrazují ve formuláři `frmGraf`.【F:VBA/Rozpocet/Modules/Grafy.bas†L80-L139】
-- **Kontingenční tabulka**: pivot „Rozpočet“ s možností drill‑down. 【F:VBA/Rozpocet/Modules/Navigace.bas†L27-L53】
-- **Konfigurace**: uložení serveru a DB + barev grafů (C7/C8).【F:VBA/Rozpocet/Modules/Connection.bas†L80-L112】【F:VBA/Rozpocet/Modules/Grafy.bas†L5-L76】
+- **Aplikace**: hlavní rozpočtová tabulka; sloupce B:AQ obsahují měsíční hodnoty v mřížce, řádky 4/5 nesou rok/měsíc; poznámky ve sloupci AS se ukládají do `data.ini`.
+- **Kumulace**: kumulace plán/skutečnost/rozdíl dle checkboxů; data se přepočítávají makrem a navazují na strukturu Aplikace. Rozsahy plán/skutečnost/rozdíl jsou fixní (F–Q, S–AD, AF–AQ).
+- **DataProGraf**: pomocný list pro grafy, kopíruje data z Aplikace/Kumulace pro zobrazení ve formu grafů.
+- **Grafy**: obsahuje grafy `GrafKategorie` a `GrafKategorieKumulativni`; grafy se exportují jako JPG a zobrazují ve formuláři `frmGraf`.
+- **Kontingenční tabulka**: pivot „Rozpočet“ s možností drill‑down.
+- **Konfigurace**: uložení serveru a DB + barev grafů (C7/C8).
 
 ### 1.3 Typický workflow v Excel/VBA
 
-1. **Otevření sešitu** → skrytí Ribbon/toolbar, zobrazení `frmLogin`.【F:VBA/Rozpocet/ExcelObjects/ThisWorkbook.cls†L29-L69】
-2. **Login** → ověření přes SQL Server (SQLOLEDB), uložení přihlašovacích údajů v paměti, načtení dat a konfigurace. 【F:VBA/Rozpocet/Forms/frmLogin.frm†L17-L67】【F:VBA/Rozpocet/Modules/Connection.bas†L22-L129】
-3. **Načtení dat** → `LoadDataFromQueries` načte `hvw_ReportRozpocetPlneni` do listu Rozpočet, zobrazí progress form. 【F:VBA/Rozpocet/Modules/Data.bas†L20-L139】
-4. **Kumulace** → checkboxy v Kumulaci určují, které řádky se kumulují; single‑select checkbox spouští grafy. 【F:VBA/Rozpocet/Modules/Data.bas†L256-L507】【F:VBA/Rozpocet/ExcelObjects/List3.cls†L12-L33】
-5. **Detail** → klik do sloupců S–AD spustí detailní dotaz na `hvw_ReportRozpocetPlneniDetail` a vytvoří list Detail. 【F:VBA/Rozpocet/Modules/Data.bas†L153-L246】
-6. **Export** → kopie do nového XLSX se sloupci B:AQ pro Aplikaci i Kumulaci (převod na hodnoty). 【F:VBA/Rozpocet/Modules/Copy.bas†L3-L99】
+1. **Otevření sešitu** → skrytí Ribbon/toolbar, zobrazení `frmLogin`.
+2. **Login** → ověření přes SQL Server (SQLOLEDB), uložení přihlašovacích údajů v paměti, načtení dat a konfigurace.
+3. **Načtení dat** → `LoadDataFromQueries` načte `hvw_ReportRozpocetPlneni` do listu Rozpočet, zobrazí progress form.
+4. **Kumulace** → checkboxy v Kumulaci určují, které řádky se kumulují; single‑select checkbox spouští grafy.
+5. **Detail** → klik do sloupců S–AD spustí detailní dotaz na `hvw_ReportRozpocetPlneniDetail` a vytvoří list Detail.
+6. **Export** → kopie do nového XLSX se sloupci B:AQ pro Aplikaci i Kumulaci (převod na hodnoty).
 
 ### 1.4 Současné omezení multi‑user
 
-Sešit je fakticky **single‑user**: při otevření se pokouší přepnout na `xlReadWrite` a pokud je soubor otevřen jiným uživatelem, aplikace se ukončí. 【F:VBA/Rozpocet/ExcelObjects/ThisWorkbook.cls†L42-L61】
+Sešit je fakticky **single‑user**: při otevření se pokouší přepnout na `xlReadWrite` a pokud je soubor otevřen jiným uživatelem, aplikace se ukončí.
 
 ---
 
@@ -381,7 +381,35 @@ SET [Status] = "Approved"
 
 ---
 
-## 7) Doporučený postup migrace
+## 7) Přesná mapovací logika dat (Excel/SQL → AppSheet)
+
+### 7.1 Rozpad mřížky na řádky (Aplikace → BudgetLines)
+
+VBA používá mřížku s měsíci ve sloupcích (B:AQ). V AppSheet musí být každý měsíc samostatný řádek v `BudgetLines`.
+
+**Převodní logika (pseudo‑ETL):**
+1. Pro každý řádek Aplikace (např. 6..N) přečti fixní dimenze: `Skupina/Ucet/CostCenter/Category` (dle toho, co je v levé části tabulky).
+2. Pro každý sloupec měsíce (B..AQ) vytvoř nový řádek BudgetLine:
+   - `BudgetPeriodId` = lookup podle `Year/Month` z řádků 4/5.
+   - `AmountPlanned` = hodnota z mřížky.
+   - `CostCenterId`, `CategoryId`, `AccountCode` = z dimenzí na řádku.
+   - `Notes` = z pole AS (pokud navázané na daný řádek).
+
+**Výsledek:** 1 řádek v Aplikace × 12 měsíců = 12 záznamů v BudgetLines.
+
+### 7.2 SQL view → Actuals
+`hvw_ReportRozpocetPlneniDetail` mapovat 1:1 do `Actuals`:
+- `TransactionDate` = `Datum`
+- `Company` = `Firma`
+- `Employee` = `Zamestnanec`
+- `AccountCode` = `Ucet`
+- `Description` = `Popis`
+- `Amount` = `CastkaMD - CastkaDAL` (pokud je nutná čistá částka)
+
+### 7.3 SQL view → BudgetLines (alternativa)
+Pokud view již obsahuje plán v řádkové struktuře, lze napojit `BudgetLines` přímo na view (read‑only) a plán editovat v samostatné tabulce `BudgetLines_Editable`.
+
+## 8) Doporučený postup migrace
 
 1. **Vytvořit backend tabulky** v SQL/Google Sheets/AppSheet DB dle návrhu.
 2. **Importovat master data** (CostCenters, Categories, Users).
@@ -392,8 +420,65 @@ SET [Status] = "Approved"
 
 ---
 
-## 8) Poznámky k rozdílům oproti VBA
+## 9) Poznámky k rozdílům oproti VBA
 
 - V AppSheet není nutné exportovat grafy do JPG – dashboardy mají nativní grafy.
 - Row‑based data odstraní limity mřížkové struktury a zjednoduší agregace.
 - Multi‑user přístup bude řešen přes bezpečnostní filtry a role (bez omezení na single‑user sešit).
+
+## 10) Role‑based přístup (konkrétní expressions)
+
+**Je uživatel Approver?**
+```
+IN(
+  "Approver",
+  SELECT(Roles[RoleName],
+    IN([RoleId],
+      SELECT(UserRoles[RoleId], [UserId] = LOOKUP(USEREMAIL(), Users, Email, UserId))
+    )
+  )
+)
+```
+
+**Je uživatel Editor?**
+```
+IN(
+  "BudgetEditor",
+  SELECT(Roles[RoleName],
+    IN([RoleId],
+      SELECT(UserRoles[RoleId], [UserId] = LOOKUP(USEREMAIL(), Users, Email, UserId))
+    )
+  )
+)
+```
+
+**Podmíněná editace BudgetLines (role + stav období):**
+```
+AND(
+  [BudgetPeriodId].[Status] = "Draft",
+  IN(
+    LOOKUP(USEREMAIL(), Users, Email, UserId),
+    SELECT(UserCostCenters[UserId],
+      AND(
+        [CostCenterId] = [_THISROW].[CostCenterId],
+        IN([PermissionLevel], LIST("Editor", "Approver"))
+      )
+    )
+  )
+)
+```
+
+## 11) Notifikace a workflow (Bots)
+
+**Notifikace při odeslání rozpočtu ke schválení**
+- Trigger: `BudgetPeriods` update, `[Status]` changes to `Submitted`.
+- Recipients:
+  ```
+  SELECT(Users[Email], IN(Users[UserId], SELECT(UserRoles[UserId], [RoleId] = LOOKUP("Approver", Roles, RoleName, RoleId))))
+  ```
+- Message: „Rozpočet {PeriodName} čeká na schválení.”
+
+**Notifikace při schválení/odmítnutí**
+- Trigger: `[Status]` changes to `Approved` nebo `Draft`.
+- Recipient: `[CreatedBy]` (autor období).
+- Message: „Rozpočet {PeriodName} byl {Approved/Rejected}.”
